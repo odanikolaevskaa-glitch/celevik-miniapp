@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Целевик</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{ --ink:#20222a; --muted:#8a8d98; --line:#e7e7e3; --card:#fff; --bg:#f4f4f1; --warn:#b8863c; }
+    .s-long{  --accent:#2f5c4e; --accent-soft:#e5eeea; }
+    .s-medium{--accent:#7a4c26; --accent-soft:#efe6db; }
+    .s-short{ --accent:#3d6b45; --accent-soft:#e6efe8; }
+
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;}
+    body{min-height:100vh;padding:0 16px calc(40px + env(safe-area-inset-bottom));}
+    .wrap{max-width:520px;margin:0 auto;}
+
+    header{padding:24px 2px 16px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+    .title{font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1;}
+    .subtitle{margin-top:7px;color:var(--muted);font-size:14px;font-weight:500;}
+
+    .hero{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:16px;background:#eef1f2;box-shadow:0 3px 12px rgba(20,20,30,.04);}
+    .hero svg{display:block;width:100%;height:auto;}
+    .mk{transition:transform .6s cubic-bezier(.4,1.05,.5,1);}
+
+    .section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px rgba(20,20,30,.04);}
+    .sec-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+    .sec-name{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:700;letter-spacing:-.01em;}
+    .sec-name .tag{width:9px;height:9px;border-radius:2px;background:var(--accent);}
+    .sec-sub{margin-top:3px;font-size:13px;font-weight:500;color:var(--muted);}
+    .status-pill{padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--accent-soft);color:var(--accent);}
+    .weather{margin-top:8px;font-size:12.5px;font-weight:500;color:var(--warn);}
+
+    .tasks{margin-top:14px;}
+    .task{display:flex;align-items:center;gap:12px;padding:13px 2px;border-top:1px solid var(--line);animation:taskIn .22s ease;}
+    @keyframes taskIn{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:none;}}
+    .check{flex:0 0 22px;width:22px;height:22px;border-radius:6px;border:2px solid #cfd0c9;background:#fff;cursor:pointer;transition:transform .12s ease,border-color .12s;}
+    .check:active{transform:scale(.86);}
+    .section:hover .check{border-color:var(--accent);}
+    .task-text{flex:1;font-size:15px;font-weight:500;line-height:1.35;}
+    .task.done{animation:taskOut .38s ease forwards;}
+    @keyframes taskOut{to{opacity:0;transform:translateX(36px);height:0;padding:0;margin:0;}}
+    .empty{border-top:1px solid var(--line);padding:16px 2px 12px;color:var(--muted);font-size:14px;font-weight:500;line-height:1.45;}
+
+    .add-row{padding:6px 0 4px;}
+    .add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;border:1px solid var(--line);font-size:14px;font-weight:600;cursor:pointer;background:#f6f6f3;color:var(--ink);transition:transform .12s ease;}
+    .add-btn:active{transform:scale(.96);}
+    .add-btn .plus{font-size:16px;line-height:1;margin-top:-1px;}
+    .add-form{display:none;gap:8px;padding:4px 0 4px;}
+    .add-form.open{display:flex;}
+    .add-form input{flex:1;min-width:0;padding:11px 13px;border-radius:9px;border:1px solid var(--line);font-size:15px;font-family:inherit;font-weight:500;color:var(--ink);outline:none;transition:border-color .15s;}
+    .add-form input:focus{border-color:var(--accent);}
+    .save-btn{flex:0 0 auto;padding:0 18px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;}
+
+    .reminder{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:0 3px 12px rgba(20,20,30,.04);animation:taskIn .3s ease;}
+    .reminder .rtext{flex:1;min-width:170px;font-size:14.5px;font-weight:700;line-height:1.3;color:var(--ink);}
+    .reminder .rtext small{display:block;font-weight:500;color:var(--muted);margin-top:3px;font-size:12.5px;}
+    .reminder .ract{display:flex;gap:8px;}
+    .rbtn{border:none;border-radius:9px;padding:10px 15px;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s ease;}
+    .rbtn:active{transform:scale(.95);}
+    .rbtn.go{background:var(--ink);color:#fff;}
+    .rbtn.ok{background:#f2f2ef;color:var(--ink);border:1px solid var(--line);}
+
+    #toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 28px rgba(0,0,0,.24);opacity:0;pointer-events:none;z-index:50;display:flex;align-items:center;gap:9px;max-width:88%;transition:opacity .25s ease,transform .25s ease;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    #toast .tdot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;}
+
+    .stub{max-width:420px;margin:60px auto 0;text-align:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:32px 24px;box-shadow:0 3px 12px rgba(20,20,30,.04);}
+    .stub h2{font-size:19px;font-weight:700;margin-bottom:10px;}
+    .stub p{color:var(--muted);font-size:15px;line-height:1.5;}
+
+    @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important;}}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app"></div>
+  <script>
+    "use strict";
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg){ try{ tg.ready(); tg.expand(); }catch(e){} }
+    function haptic(){ try{ tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred("light"); }catch(e){} }
+
+    const STORE_KEY = "celevik_path_v1";
+    const STEPS = 8;
+    const MOUNTS = {
+      long:   { cls:"s-long",   short:"на год",    bxL:12, bxR:180, px:84,  py:52,  fill:"#5b7f74", dark:"#3d6a5c", snow:true,  accent:"#2f5c4e" },
+      medium: { cls:"s-medium", short:"на месяц",  bxL:120,bxR:300, px:205, py:112, fill:"#a98a5f", dark:"#8a5a2f", snow:false, accent:"#7a4c26" },
+      short:  { cls:"s-short",  short:"на неделю", bxL:232,bxR:358, px:300, py:158, fill:"#6aa072", dark:"#4c8256", snow:false, accent:"#3d6b45" }
+    };
+
+    const DEFAULT_DATA = {
+      "app":"Целевик",
+      "sections":[
+        {"id":"long","title":"Долгосрочные","subtitle":"Куда я иду","tasks":[
+          {"id":"l1","text":"Запустить свой обучающий продукт по нейросетям"},
+          {"id":"l2","text":"Выйти из найма и жить с блога"},
+          {"id":"l3","text":"Собрать 50 000 подписчиков"}]},
+        {"id":"medium","title":"Среднесрочные","subtitle":"На ближайшие месяцы","tasks":[
+          {"id":"m1","text":"Записать курс из 8 уроков"},
+          {"id":"m2","text":"Настроить автоворонку продаж"},
+          {"id":"m3","text":"Провести первый вебинар"}]},
+        {"id":"short","title":"Краткосрочные","subtitle":"На эту неделю","tasks":[
+          {"id":"s1","text":"Написать 3 поста в блог"},
+          {"id":"s2","text":"Смонтировать рилс про нейросети"},
+          {"id":"s3","text":"Разобрать 5 инструментов для контента"}]}
+      ]
+    };
+
+    let state = null;
+
+    function load(){ try{ const r=localStorage.getItem(STORE_KEY); if(r) return JSON.parse(r); }catch(e){} return null; }
+    function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+    function seedFrom(json){
+      const s={};
+      json.sections.forEach(sec=>{ s[sec.id]={title:sec.title,subtitle:sec.subtitle,
+        tasks:(sec.tasks||[]).map(t=>({id:t.id,text:t.text})),grown:0,lastDoneAt:null}; });
+      return {version:1, order:json.sections.map(x=>x.id), sections:s};
+    }
+    function progressOf(sec){ return Math.min(sec.grown, STEPS); }
+    function wiltOf(sec){
+      if(!sec.lastDoneAt) return 0;
+      const days=(Date.now()-sec.lastDoneAt)/86400000;
+      if(days<3) return 0;
+      return Math.min((days-3)/5, 1);
+    }
+    function weekKey(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-x.getDay());
+      return x.getFullYear()+"-"+(x.getMonth()+1)+"-"+x.getDate(); }
+    function shouldRemind(){ return state.lastPlanWeek !== weekKey(new Date()); }
+    function openShortForm(){
+      const el=document.querySelector('.section[data-id="short"]'); if(!el) return;
+      const addBtn=el.querySelector("[data-add]"), form=el.querySelector(".add-form"), input=el.querySelector(".add-form input");
+      if(form && !form.classList.contains("open")){ form.classList.add("open"); addBtn.parentElement.style.display="none"; }
+      el.scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>{ input && input.focus(); },320);
+    }
+
+    // ---------- Пейзаж ----------
+    function pathPoints(m){
+      const pts=[]; const baseY=244;
+      for(let i=0;i<=STEPS;i++){ const t=i/STEPS;
+        const x=m.px + Math.sin(i*1.7)*11*(1-t*0.5);
+        const y=baseY+(m.py-baseY)*t;
+        pts.push([x,y]); }
+      return pts;
+    }
+    function mountainSVG(m,wilt){
+      const dim = wilt>0 ? `<path d="M${m.bxL} 250 Q${(m.bxL+m.px)/2} ${m.py+(250-m.py)*0.35} ${m.px} ${m.py} Q${(m.bxR+m.px)/2} ${m.py+(250-m.py)*0.35} ${m.bxR} 250 Z" fill="#9aa0a0" opacity="${(wilt*0.32).toFixed(2)}"/>` : "";
+      let s=`<path d="M${m.bxL} 250 Q${(m.bxL+m.px)/2} ${m.py+(250-m.py)*0.35} ${m.px} ${m.py} Q${(m.bxR+m.px)/2} ${m.py+(250-m.py)*0.35} ${m.bxR} 250 Z" fill="${m.fill}"/>`;
+      s+=`<path d="M${m.px} ${m.py} Q${(m.bxR+m.px)/2} ${m.py+(250-m.py)*0.35} ${m.bxR} 250 L${m.px} 250 Z" fill="${m.dark}" opacity="0.45"/>`;
+      if(m.snow){ s+=`<path d="M${m.px-14} ${m.py+18} Q${m.px} ${m.py-4} ${m.px+14} ${m.py+18} Q${m.px+4} ${m.py+10} ${m.px} ${m.py+14} Q${m.px-5} ${m.py+10} ${m.px-14} ${m.py+18} Z" fill="#f4f6f7"/>`; }
+      return s+dim;
+    }
+    function cloudSVG(m,wilt){
+      if(wilt<0.35) return "";
+      const cx=m.px+10, cy=m.py-16, o=(0.5+wilt*0.4).toFixed(2);
+      return `<g opacity="${o}"><ellipse cx="${cx}" cy="${cy}" rx="20" ry="8" fill="#c4c7c0"/><ellipse cx="${cx-10}" cy="${cy+3}" rx="12" ry="7" fill="#c4c7c0"/><ellipse cx="${cx+12}" cy="${cy+3}" rx="11" ry="6" fill="#c4c7c0"/></g>`;
+    }
+    function trailSVG(pts,progress,accent){
+      let dPast="M"+pts[0][0].toFixed(1)+" "+pts[0][1].toFixed(1);
+      let dFut="M"+pts[0][0].toFixed(1)+" "+pts[0][1].toFixed(1);
+      for(let i=1;i<pts.length;i++){ const seg=" L"+pts[i][0].toFixed(1)+" "+pts[i][1].toFixed(1);
+        if(i<=progress) dPast+=seg; else dFut+=seg; }
+      let s=`<path d="${dFut}" fill="none" stroke="#b9bcae" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/>`;
+      if(progress>0) s+=`<path d="${dPast}" fill="none" stroke="${accent}" stroke-width="2.6" stroke-linecap="round"/>`;
+      for(let i=1;i<pts.length-1;i++){ const[x,y]=pts[i]; const done=i<=progress;
+        s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${done?accent:'#fff'}" stroke="${done?accent:'#b9bcae'}" stroke-width="1.5"/>`; }
+      return s;
+    }
+    function flagSVG(m,reached){ const c=reached?m.accent:'#b9bcae';
+      return `<line x1="${m.px}" y1="${m.py}" x2="${m.px}" y2="${m.py-18}" stroke="#8a8d80" stroke-width="1.6"/><path d="M${m.px} ${m.py-18} L${m.px+13} ${m.py-14} L${m.px} ${m.py-10} Z" fill="${c}"/>`;
+    }
+    function markerSVG(id,pts,progress,accent){
+      const [x,y]=pts[Math.min(progress,pts.length-1)];
+      return `<g class="mk" id="mk-${id}" style="transform:translate(${x.toFixed(1)}px,${y.toFixed(1)}px)"><circle r="7" fill="#fff" stroke="${accent}" stroke-width="3"/><circle r="2.6" fill="${accent}"/></g>`;
+    }
+    function rng(seed){ let s=seed%2147483647; if(s<=0)s+=2147483646; return ()=> (s=s*16807%2147483647)/2147483647; }
+    function skyOf(h){
+      if(h>=5&&h<8)  return {stops:[["0","#9fb0cc"],["0.55","#d9b79a"],["1","#f1ddc9"]],ground:"#e2ddca",sun:{x:66,y:150,r:16,c:"#f3c98a"},stars:0};
+      if(h>=8&&h<18) return {stops:[["0","#e9eef2"],["1","#f4f4f1"]],ground:"#dde2d6",sun:{x:288,y:58,r:14,c:"#f7e7c0"},stars:0};
+      if(h>=18&&h<21)return {stops:[["0","#5f5b7a"],["0.5","#c9805f"],["1","#efc59c"]],ground:"#cdc7bd",sun:{x:300,y:166,r:18,c:"#ec9666"},stars:4};
+      return {stops:[["0","#242c46"],["1","#3b4560"]],ground:"#39435c",moon:{x:296,y:54,r:14,c:"#e9ead2"},stars:22};
+    }
+    function skyDefs(sky){ return `<defs><linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">`+sky.stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join("")+`</linearGradient></defs>`; }
+    function celestialSVG(sky){
+      let s="";
+      if(sky.sun){const{x,y,r,c}=sky.sun; s+=`<circle cx="${x}" cy="${y}" r="${r*2.1}" fill="${c}" opacity="0.18"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;}
+      if(sky.moon){const{x,y,r,c}=sky.moon; s+=`<circle cx="${x}" cy="${y}" r="${r*1.8}" fill="${c}" opacity="0.12"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><circle cx="${x+5}" cy="${y-3}" r="${r}" fill="#242c46" opacity="0.55"/>`;}
+      return s;
+    }
+    function starsSVG(sky){ if(!sky.stars) return ""; const rand=rng(999); let s="";
+      for(let i=0;i<sky.stars;i++){ const x=(rand()*360).toFixed(0), y=(rand()*150).toFixed(0), r=(0.6+rand()*1.2).toFixed(1);
+        s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${(0.5+rand()*0.5).toFixed(2)}"/>`; } return s;
+    }
+    function sceneSVG(){
+      const sky=skyOf(new Date().getHours());
+      let s=`<svg viewBox="0 0 360 270">`;
+      s+=skyDefs(sky)+`<rect width="360" height="270" fill="url(#skyGrad)"/>`+starsSVG(sky)+celestialSVG(sky);
+      s+=`<rect y="250" width="360" height="20" fill="${sky.ground}"/>`;
+      state.order.forEach(id=>{ const m=MOUNTS[id], sec=state.sections[id]; s+=mountainSVG(m,wiltOf(sec)); });
+      state.order.forEach(id=>{ const m=MOUNTS[id], sec=state.sections[id], p=progressOf(sec), pts=pathPoints(m);
+        s+=trailSVG(pts,p,m.accent)+flagSVG(m,p>=STEPS)+cloudSVG(m,wiltOf(sec))+markerSVG(id,pts,p,m.accent); });
+      s+=`</svg>`;
+      return s;
+    }
+
+    // ---------- Рендер ----------
+    function render(){
+      const app=document.getElementById("app");
+      const total=state.order.reduce((a,id)=>a+state.sections[id].grown,0);
+      const remind=shouldRemind();
+      const banner = remind ? `
+        <div class="reminder" id="reminder">
+          <div class="rtext">Пора сделать шаг на неделю
+            <small>Закрой задачу — поднимись к вершине</small></div>
+          <div class="ract">
+            <button class="rbtn go" id="rem-go">Заполнить</button>
+            <button class="rbtn ok" id="rem-ok">Уже готово</button>
+          </div>
+        </div>` : "";
+      app.innerHTML = `
+        <header>
+          <div class="title">Целевик</div>
+          <div class="subtitle">${total===0?"Три вершины — год, месяц, неделя. Каждая закрытая задача — шаг вверх.":"Сделано шагов: "+total+"."}</div>
+        </header>
+        ${banner}
+        <div class="hero">${sceneSVG()}</div>
+        <div id="sections"></div>`;
+      if(remind){
+        document.getElementById("rem-ok").addEventListener("click",()=>{ state.lastPlanWeek=weekKey(new Date()); save(); render(); });
+        document.getElementById("rem-go").addEventListener("click",openShortForm);
+      }
+      const cont=document.getElementById("sections");
+      state.order.forEach(id=>cont.appendChild(sectionEl(id)));
+    }
+
+    function sectionEl(id){
+      const sec=state.sections[id], m=MOUNTS[id];
+      const p=progressOf(sec), w=wiltOf(sec);
+      const status = p>=STEPS ? "Вершина покорена" : "Веха "+p+" из "+STEPS;
+      const el=document.createElement("div");
+      el.className="section "+m.cls; el.dataset.id=id;
+      el.innerHTML=`
+        <div class="sec-head">
+          <div>
+            <div class="sec-name"><span class="tag"></span>${sec.title}</div>
+            <div class="sec-sub">${m.short} · вершина за ${STEPS} шагов</div>
+          </div>
+          <span class="status-pill">${status}</span>
+        </div>
+        ${w>=0.35?`<div class="weather">Давно не было шагов — на вершине пасмурно.</div>`:""}
+        <div class="tasks"></div>
+        <div class="add-row"><button class="add-btn" data-add><span class="plus">+</span> Добавить цель</button></div>
+        <div class="add-form">
+          <input type="text" placeholder="Что хочешь добавить?" maxlength="120"/>
+          <button class="save-btn">ОК</button>
+        </div>`;
+      const tasksEl=el.querySelector(".tasks");
+      if(sec.tasks.length===0){
+        tasksEl.innerHTML=`<div class="empty">Пока пусто. Добавь цель — и сделай первый шаг вверх.</div>`;
+      }else{
+        sec.tasks.forEach(t=>tasksEl.appendChild(taskEl(id,t)));
+      }
+      const addBtn=el.querySelector("[data-add]"), form=el.querySelector(".add-form"),
+            input=el.querySelector(".add-form input"), okBtn=el.querySelector(".save-btn");
+      addBtn.addEventListener("click",()=>{ form.classList.add("open"); addBtn.parentElement.style.display="none"; input.focus(); });
+      const submit=()=>{ const text=input.value.trim(); if(!text){input.focus();return;}
+        sec.tasks.push({id:"u"+Date.now(),text});
+        if(id==="short"){ state.lastPlanWeek=weekKey(new Date()); }
+        save(); render(); };
+      okBtn.addEventListener("click",submit);
+      input.addEventListener("keydown",e=>{ if(e.key==="Enter") submit(); });
+      return el;
+    }
+
+    function taskEl(id,t){
+      const row=document.createElement("div"); row.className="task";
+      row.innerHTML=`<div class="check" role="button" aria-label="Выполнено"></div><div class="task-text">${escapeHtml(t.text)}</div>`;
+      row.querySelector(".check").addEventListener("click",()=>complete(id,t.id,row));
+      return row;
+    }
+
+    function complete(id,taskId,row){
+      const sec=state.sections[id], m=MOUNTS[id];
+      const prev=progressOf(sec);
+      sec.tasks=sec.tasks.filter(x=>x.id!==taskId);
+      sec.grown+=1;
+      sec.lastDoneAt=Date.now();
+      const np=progressOf(sec);
+      save(); haptic();
+      row.classList.add("done");
+      // двигаем маркер вверх по тропе
+      const pts=pathPoints(m); const [x,y]=pts[Math.min(np,pts.length-1)];
+      const mk=document.getElementById("mk-"+id);
+      if(mk){ mk.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; }
+      if(np>=STEPS && prev<STEPS){ toast(`Вершина покорена: ${sec.title.toLowerCase()}!`, m.accent, true); }
+      else if(np>prev){ toast(`Шаг вверх · до вершины ${STEPS-np}`, m.accent, false); }
+      else { toast(`Задача закрыта`, m.accent, false); }
+      setTimeout(render,600);
+    }
+
+    function escapeHtml(s){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+    let toastTimer=null;
+    function toast(text,color,big){
+      let t=document.getElementById("toast");
+      if(!t){ t=document.createElement("div"); t.id="toast"; document.body.appendChild(t); }
+      t.className = big ? "big" : "";
+      t.innerHTML = `<span class="tdot" style="background:${color}"></span><span>${text}</span>`;
+      void t.offsetWidth; t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer=setTimeout(()=>t.classList.remove("show"), big?2600:1800);
+    }
+
+    function showStub(){
+      document.getElementById("app").innerHTML=`<div class="stub"><h2>Не удалось загрузить данные</h2>
+        <p>Файл data.json не открылся, а сохранённых целей ещё нет. Проверь, что data.json лежит рядом с приложением, и обнови страницу.</p></div>`;
+    }
+
+    (async function init(){
+      const saved=load();
+      if(saved && saved.version===1){ state=saved; render(); startSkyClock(); return; }
+      try{
+        const res=await fetch("data.json?v="+Date.now(),{cache:"no-store"});
+        if(!res.ok) throw new Error("bad");
+        const json=await res.json();
+        state=seedFrom(json); save(); render(); startSkyClock();
+      }catch(e){
+        try{ state=seedFrom(DEFAULT_DATA); save(); render(); startSkyClock(); }
+        catch(e2){ showStub(); }
+      }
+    })();
+
+    let skyClock=null;
+    function startSkyClock(){
+      if(skyClock) return;
+      skyClock=setInterval(()=>{ const h=document.querySelector(".hero"); if(h && state) h.innerHTML=sceneSVG(); }, 5*60*1000);
+    }
+  </script>
+</body>
+</html>
